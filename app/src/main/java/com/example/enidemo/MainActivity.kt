@@ -1,58 +1,113 @@
 package com.example.enidemo
 
+import android.Manifest
+import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Bundle
-import com.google.android.material.snackbar.Snackbar
+import android.provider.AlarmClock
+import android.util.Log
+import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
-import androidx.navigation.findNavController
-import androidx.navigation.ui.AppBarConfiguration
-import androidx.navigation.ui.navigateUp
-import androidx.navigation.ui.setupActionBarWithNavController
-import android.view.Menu
-import android.view.MenuItem
+
+
+
+import androidx.core.content.ContextCompat.*
+import androidx.databinding.DataBindingUtil
+import androidx.lifecycle.Observer
+import androidx.lifecycle.ViewModelProvider
 import com.example.enidemo.databinding.ActivityMainBinding
+import com.example.enidemo.model.*
 
 class MainActivity : AppCompatActivity() {
 
-    private lateinit var appBarConfiguration: AppBarConfiguration
     private lateinit var binding: ActivityMainBinding
+    private lateinit var counterViewModel: CounterViewModel
+    private lateinit var baptistes: CharacterViewModel
+
+    var historyMgr = HistoryMgr()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        binding = ActivityMainBinding.inflate(layoutInflater)
-        setContentView(binding.root)
+        binding = DataBindingUtil.setContentView(this, R.layout.activity_main)
+        //   ActivityMainBinding.inflate(layoutInflater)
+        //  setContentView(binding.root)
 
         setSupportActionBar(binding.toolbar)
 
-        val navController = findNavController(R.id.nav_host_fragment_content_main)
-        appBarConfiguration = AppBarConfiguration(navController.graph)
-        setupActionBarWithNavController(navController, appBarConfiguration)
+        // Creer perso 1
+        baptistes = CharacterViewModel()
+        baptistes.pseudo.value = "SuperBaptistes"
+        baptistes.level.value = 1
 
-        binding.fab.setOnClickListener { view ->
-            Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                    .setAction("Action", null).show()
+        // Connecté au view model
+       // counterViewModel = ViewModelProvider(this).get(CounterViewModel::class.java)
+
+        /*
+        counterViewModel.counter.observe(this, Observer {
+            binding.counterViewModel = counterViewModel;
+        })
+        */
+
+        baptistes.level.observe(this, Observer {
+            binding.superBaptiste = baptistes
+        })
+
+        // Sur les deux boutons
+        binding.btnPlus.setOnClickListener { view ->
+            // Modifier pseudo
+            baptistes.editPseudo(binding.edtPseudo.text.toString())
+            // Level up
+            baptistes.levelUp()
+        }
+        //
+    }
+
+    /**
+     * Coucou j'ai glissé chef
+     * @param test Test
+     * @return Un entierr
+     */
+    fun exampleGenericResponse(test : Int) : Int{
+        var reponse = PersonManager.getPersonId(1)
+        reponse.objectResult // C'est une personne
+
+        assert(reponse.codeResponse.equals("702"))
+        Log.i("EniDemo", reponse.getMessage())
+
+        var reponseGetAll = PersonManager.getAllPerson(1)
+
+        return 0
+    }
+
+    private fun checkPermission() {
+        val permission = checkSelfPermission(
+            this, Manifest.permission.ACCESS_FINE_LOCATION)
+        if (permission != PackageManager.PERMISSION_GRANTED) {
+            permissionsResultCallback.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+        } else {
+            println("Permission isGranted")
         }
     }
 
-    override fun onCreateOptionsMenu(menu: Menu): Boolean {
-        return true
-        // Inflate the menu; this adds items to the action bar if it is present.
-        menuInflater.inflate(R.menu.menu_main, menu)
-    }
-
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        return when (item.itemId) {
-            R.id.action_settings -> true
-            else -> super.onOptionsItemSelected(item)
+    private val permissionsResultCallback = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()){
+        when (it) {
+            true -> {
+                Toast.makeText(this, "Permission has been granted by user (Crevette Nutella", Toast.LENGTH_SHORT).show() }
+            false -> {
+                Toast.makeText(this, "Permission denied", Toast.LENGTH_SHORT).show()
+                //show your custom dialog and naviage to Permission seetings
+            }
         }
     }
 
-    override fun onSupportNavigateUp(): Boolean {
-        val navController = findNavController(R.id.nav_host_fragment_content_main)
-        return navController.navigateUp(appBarConfiguration)
-                || super.onSupportNavigateUp()
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
     }
 }
