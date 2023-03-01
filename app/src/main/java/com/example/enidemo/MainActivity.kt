@@ -1,16 +1,12 @@
 package com.example.enidemo
 
 import android.Manifest
-import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
-import android.provider.AlarmClock
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
-
-
 import androidx.core.content.ContextCompat.*
 import androidx.databinding.DataBindingUtil
 import androidx.lifecycle.Observer
@@ -19,6 +15,8 @@ import androidx.lifecycle.lifecycleScope
 import androidx.room.Room
 import com.example.enidemo.databinding.ActivityMainBinding
 import com.example.enidemo.model.*
+import com.example.enidemo.recyclerview.ListQuestAdapter
+import com.example.enidemo.recyclerview.QuestListener
 import com.example.enidemo.room.*
 import kotlinx.coroutines.launch
 
@@ -68,7 +66,28 @@ class MainActivity : AppCompatActivity() {
         }
 
         // Demo inventaire
-        demoInventory()
+        //demoInventory()
+        // View Model
+        val listQuestViewModel = ListQuestViewModel(application)
+
+        // Attacher l'adapteur du recycler view
+        val adapter = ListQuestAdapter(QuestListener {
+            Log.i("EniDemo", "J'ai cliqué sur la ligne")
+        })
+
+        binding.rvQuests.adapter = adapter
+
+        // Ecouter changement des données
+        listQuestViewModel.quests.observe(this, Observer {
+            it?.let {
+                // Mettre à jour les données dans l'adapteur
+                adapter.submitList(it)
+            }
+        })
+
+        // Récupérer les données mockés
+        listQuestViewModel.mock()
+
     }
 
     fun demoInventory() {
